@@ -17,6 +17,10 @@ spring:
             - Path=/test/**
           filters:
             - StripPrefix=1
+        - id: meter-service-route
+          uri: lb://meter-service
+          predicates:
+            - Path=/meters/**
 
 management:
   endpoints:
