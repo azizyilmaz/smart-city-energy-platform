@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: consumer-service
+
+  config:
+    import: "optional:configserver:http://localhost:8888"
+
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        register: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
