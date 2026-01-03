@@ -4,7 +4,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "meter-service")
+@FeignClient(name = "meter-service", fallback = MeterClientFallback.class)
 public interface MeterClient {
 
     @GetMapping("/meters/{id}")
