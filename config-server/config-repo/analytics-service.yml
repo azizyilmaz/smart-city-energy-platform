@@ -1,14 +1,14 @@
 spring:
   application:
-    name: meter-service
+    name: analytics-service
   cloud:
     stream:
       function:
         definition: meter
       bindings:
-        meter-out-0:
+        meter-in-0:
           destination: meter.readings
-          content-type: application/json
+          group: analytics-group
 
 server:
   port: 0

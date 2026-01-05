@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: analytics-service
+  config:
+    import: "optional:configserver:http://localhost:8888"
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        register: true
+        prefer-ip-address: true
+    function:
+      definition: meter
+      stream:
+        bindings:
+          meter-in-0:
+            destination: meter-events
+            group: analytics-group
+            content-type: application/json
+        rabbit:
+          bindings:
+            meter-in-0:
+              consumer:
+                auto-bind-dlq: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

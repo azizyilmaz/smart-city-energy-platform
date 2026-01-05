@@ -42,6 +42,43 @@ At this stage, the focus is on establishing a **production-ready foundation** us
     - Spring Cloud LoadBalancer
 - Supports routing, predicates, and filters
 
+### 4. Dummy Meter Service
+- Simulates **smart meter devices** producing consumption data
+- Registers itself with Consul
+- Exposes REST endpoints for synchronous access
+- Produces **MeterReadingEvent** messages to RabbitMQ
+- Acts as the primary **data source** for the platform
+
+---
+
+### 5. Feign Client Integration
+- Downstream services access `meter-service` via **Feign Client**
+- Uses **Consul-based service discovery**
+- Client-side load balancing handled by **Spring Cloud LoadBalancer**
+- No hardcoded hostnames or ports
+- Demonstrates **service-to-service communication**
+
+---
+
+### 6. Resilience4J – Circuit Breaker
+- Fault tolerance added on Feign Client calls
+- Circuit Breaker patterns applied:
+    - Failure rate threshold
+    - Slow call detection
+    - Automatic fallback handling
+- Prevents cascading failures when `meter-service` is unavailable
+- Fully integrated with Spring Boot Actuator
+
+---
+
+### 7. RabbitMQ + Spring Cloud Stream
+- Asynchronous event-driven communication enabled
+- Uses **Spring Cloud Function programming model**
+- Meter readings are published as domain events
+- Analytics services consume events via typed Consumers
+- RabbitMQ runs as infrastructure via Docker
+- Ensures loose coupling between producers and consumers
+
 ---
 
 ## 🏗️ Project Structure
@@ -50,13 +87,37 @@ At this stage, the focus is on establishing a **production-ready foundation** us
 * │
 * ├── config-server/
 * │ ├── src/
+* │ │ └── main/java/com/smartcity/configserver
 * │ ├── config-repo/
 * │ │ └── api-gateway.yml
+* │ │ ├── meter-service.yml
+* │ │ └── analytics-service.yml
 * │ ├── pom.xml
 * │ └── application.yml
 * │
 * ├── api-gateway/
 * │ ├── src/
+* │ │ └── main/java/com/smartcity/apigateway
+* │ ├── pom.xml
+* │ └── application.yml
+* │
+* ├── meter-service/
+* │ ├── src/
+* │ │ └── main/java/com/smartcity/meter
+* │ │ ├── controller
+* │ │ ├── service
+* │ │ ├── event
+* │ │ └── stream
+* │ ├── pom.xml
+* │ └── application.yml
+* │
+* ├── analytics-service/
+* │ ├── src/
+* │ │ └── main/java/com/smartcity/analytics
+* │ │ ├── client
+* │ │ ├── event
+* │ │ ├── service
+* │ │ └── stream
 * │ ├── pom.xml
 * │ └── application.yml
 * │
@@ -66,17 +127,38 @@ At this stage, the focus is on establishing a **production-ready foundation** us
 * └── README.md
 
 
+This structure reflects a **clear separation of concerns**:
+
+- `config-server`  
+  Centralized configuration management for all services.
+
+- `api-gateway`  
+  Single external entry point, responsible for routing, filtering, and load-balanced access.
+
+- `meter-service`  
+  Simulates smart meters, exposes REST endpoints, and publishes meter reading events.
+
+- `analytics-service`  
+  Consumes meter events asynchronously, calls Meter Service synchronously using Feign, and applies circuit breaking.
+
+- `docker`  
+  Contains only shared infrastructure components (Consul, RabbitMQ).
+
 ---
 
 ## 🔧 Technology Stack
 
 - **Java 21**
-- **Spring Boot 4.x**
-- **Spring Cloud 2025.x**
+- **Spring Boot 3.x**
+- **Spring Cloud 2024.x**
 - **Spring Cloud Config Server**
 - **Spring Cloud Gateway**
 - **Spring Cloud Consul Discovery**
 - **Spring Cloud LoadBalancer**
+- **Spring Cloud OpenFeign**
+- **Resilience4J**
+- **Spring Cloud Stream**
+- **RabbitMQ**
 - **Docker & Docker Compose**
 
 ---
@@ -90,6 +172,11 @@ Only infrastructure components run in Docker.
 cd docker
 docker compose up -d
 ```
+This will start:
+- **Consul** – Service Discovery
+- **RabbitMQ** – Event Broker
+
+---
 
 ### Consul UI
 
@@ -103,8 +190,31 @@ From the Consul UI you can:
 - Verify that services are registered
 - Check service health status
 - Inspect service metadata and instances
+- Validate client-side load balancing behavior
 
 ---
+
+### RabbitMQ Management UI
+
+RabbitMQ provides a management console to inspect exchanges, queues, and message flow within the platform.
+
+```bash
+http://localhost:15672
+```
+
+Default credentials:
+
+```text
+username: guest
+password: guest
+```
+
+Using the RabbitMQ Management UI you can:
+
+- Verify that meter-service publishes events correctly
+- Inspect exchanges and bindings created by Spring Cloud Stream
+- Observe queues used by analytics-service
+- Monitor message rates, acknowledgements, and consumer activity
 
 ## ▶️ Application Startup Order
 
@@ -117,7 +227,11 @@ Follow the steps below exactly in this order.
 docker compose up -d
 ```
 
-Ensure Consul is up and accessible before starting any Spring Boot application.
+Ensure that:
+- Consul is accessible on port 8500
+- RabbitMQ Management UI is accessible on port 15672
+
+Do not start any Spring Boot applications before this step.
 
 ---
 
@@ -146,12 +260,39 @@ Run the following application from your IDE:
 
 api-gateway → ApiGatewayApplication
 
-
 Expected behavior:
 - API Gateway starts on port **8080**
 - Fetches configuration from the Config Server
 - Registers itself with Consul
 - Initializes Spring Cloud Gateway routes
+
+---
+
+### 4. Start Meter Service
+
+Run the following application from your IDE:
+
+meter-service → MeterServiceApplication
+
+
+Expected behavior:
+- Registers with Consul
+- Exposes REST endpoints for meter data
+- Publishes `MeterReadingEvent` messages to RabbitMQ
+
+---
+
+### 5. Start Analytics Service
+
+Run the following application from your IDE:
+
+analytics-service → AnalyticsServiceApplication
+
+Expected behavior:
+- Registers with Consul
+- Consumes meter events asynchronously via Spring Cloud Stream
+- Calls Meter Service synchronously using Feign Client
+- Protected by Resilience4J Circuit Breaker
 
 ---
 
@@ -223,8 +364,54 @@ Both services should:
 
 ---
 
+### 4. Gateway → Meter Service Routing
+
+```bash
+http://localhost:8080/meters/api/readings
+```
+
+Expected:
+- Request routed via Gateway
+- Load-balanced via Consul
+- Response from Meter Service
+
+---
+
+### 5. Feign Client Verification
+
+- Analytics service calls Meter service using Feign
+- No hardcoded hostnames
+- Calls resolved via Consul + LoadBalancer
+
+---
+
+### 6. Circuit Breaker Verification
+
+- Stop Meter Service
+- Trigger Feign call
+- Observe fallback logic
+- Circuit transitions:
+  - CLOSED → OPEN → HALF_OPEN
+
+---
+
+### 7. RabbitMQ Event Flow Verification
+
+- Open RabbitMQ UI
+- Verify:
+  - Exchange: meter-events
+  - Queue: meter-events.analytics-group
+- Publish meter events
+- Observe Analytics service logs
+
+---
+
 ## 🧠 Architectural Notes
 
+- Synchronous + Asynchronous communication combined
+- REST (Feign) for queries
+- Events (RabbitMQ) for high-volume data
+- Circuit Breaker prevents cascading failures
 - Consul is used as the service registry instead of Netflix Eureka
 - Spring Cloud LoadBalancer is enabled automatically through discovery
 - Config Server acts as the centralized source of configuration
@@ -237,13 +424,11 @@ Both services should:
 ## 🚀 Next Steps
 
 Planned next steps for this platform include:
-- Adding a backend service behind the Gateway
-- Introducing Feign Clients with Consul-based load balancing
-- Applying Resilience4J for fault tolerance
-- Integrating RabbitMQ with Spring Cloud Stream
-- Enabling distributed tracing with Micrometer and Zipkin
-
-Each component will be integrated incrementally on top of this foundation.
+- Dynamic pricing engine
+- Spring Cloud Bus for config refresh
+- Micrometer + Zipkin distributed tracing
+- Spring Cloud Data Flow pipelines
+- Deployment to Pivotal Cloud Foundry
 
 ---
 
@@ -251,7 +436,7 @@ Each component will be integrated incrementally on top of this foundation.
 
 This setup intentionally reflects:
 - Real-world enterprise Spring Cloud projects
-- Modern, non-Netflix OSS architecture
+- Event-driven + request-driven hybrid architecture
 - Clean separation between infrastructure and applications
 - A scalable foundation for future microservices
 
