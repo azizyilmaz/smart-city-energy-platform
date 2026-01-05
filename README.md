@@ -49,16 +49,12 @@ At this stage, the focus is on establishing a **production-ready foundation** us
 - Produces **MeterReadingEvent** messages to RabbitMQ
 - Acts as the primary **data source** for the platform
 
----
-
 ### 5. Feign Client Integration
 - Downstream services access `meter-service` via **Feign Client**
 - Uses **Consul-based service discovery**
 - Client-side load balancing handled by **Spring Cloud LoadBalancer**
 - No hardcoded hostnames or ports
 - Demonstrates **service-to-service communication**
-
----
 
 ### 6. Resilience4J – Circuit Breaker
 - Fault tolerance added on Feign Client calls
@@ -68,8 +64,6 @@ At this stage, the focus is on establishing a **production-ready foundation** us
     - Automatic fallback handling
 - Prevents cascading failures when `meter-service` is unavailable
 - Fully integrated with Spring Boot Actuator
-
----
 
 ### 7. RabbitMQ + Spring Cloud Stream
 - Asynchronous event-driven communication enabled
