@@ -1,14 +1,15 @@
-package com.smartcity.meter_service.event;
+package com.smartcity.meter_service.stream;
 
+import com.smartcity.meter_service.event.MeterReadingEvent;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MeterEventProducer {
+public class MeterProducer {
 
     private final StreamBridge streamBridge;
 
-    public MeterEventProducer(StreamBridge streamBridge) {
+    public MeterProducer(StreamBridge streamBridge) {
         this.streamBridge = streamBridge;
     }
 

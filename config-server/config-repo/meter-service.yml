@@ -12,3 +12,6 @@ spring:
 
 server:
   port: 0
+
+pricing:
+  base-rate: 2.25

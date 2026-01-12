@@ -1,6 +1,6 @@
 spring:
   application:
-    name: analytics-service
+    name: pricing-service
   config:
     import: "optional:configserver:http://localhost:8888"
   cloud:
@@ -11,16 +11,16 @@ spring:
         register: true
         prefer-ip-address: true
     function:
-      definition: meter
+      definition: analytics
       stream:
         bindings:
-          meter-in-0:
-            destination: meter-events
-            group: analytics-group
+          analytics-in-0:
+            destination: analytics-events
+            group: pricing-group
             content-type: application/json
         rabbit:
           bindings:
-            meter-in-0:
+            analytics-in-0:
               consumer:
                 auto-bind-dlq: true
 management:

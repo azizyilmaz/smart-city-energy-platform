@@ -9,6 +9,14 @@ spring:
         meter-in-0:
           destination: meter.readings
           group: analytics-group
+          consumer:
+            auto-startup: true
+        meter-out-0:
+          destination: analytics.readings
+          content-type: application/json
 
 server:
   port: 0
+
+pricing:
+  base-rate: 2.25

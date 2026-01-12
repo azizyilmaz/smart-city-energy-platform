@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: pricing-service
+  cloud:
+    stream:
+      function:
+        definition: analytics
+      bindings:
+        analytics-in-0:
+          destination: analytics.readings
+          group: pricing-group
+          consumer:
+            auto-startup: true
+server:
+  port: 0
