@@ -11,18 +11,20 @@ spring:
         register: true
         prefer-ip-address: true
     function:
-      definition: meter
+      definition: ${function.chain}
       stream:
         bindings:
-          meter-in-0:
+          price|tax|discount-in-0:
             destination: meter-events
             group: analytics-group
             content-type: application/json
         rabbit:
           bindings:
-            meter-in-0:
+            price|tax|discount-in-0:
               consumer:
                 auto-bind-dlq: true
+    bus:
+      enabled: true
 management:
   tracing:
     sampling:
@@ -33,4 +35,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,refresh
+        include: health,info,refresh,busrefresh
+
+function:
+  chain: price|tax|discount

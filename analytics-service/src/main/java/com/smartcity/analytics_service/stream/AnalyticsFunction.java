@@ -18,7 +18,7 @@ public class AnalyticsFunction {
     }
 
     @Bean
-    public Function<MeterReadingEvent, PriceCalculatedEvent> meter() {
+    public Function<MeterReadingEvent, PriceCalculatedEvent> price() {
         return event -> {
             double price = event.consumption() * pricingConfig.getBaseRate();
             System.out.println("Analytics received: " + event);
