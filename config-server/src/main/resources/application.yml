@@ -3,8 +3,10 @@ spring:
     name: config-server
 
   cloud:
-#    config:
-#      server:
+    config:
+      server:
+        native:
+          search-locations: file:./config-repo
 #        git:
 #          uri: https://github.com/azizyilmaz/smart-city-energy-platform/tree/master/config-server/config-repo
 #          default-label: main
@@ -12,23 +14,30 @@ spring:
 
     bus:
       enabled: true
-
   rabbitmq:
     host: localhost
     port: 5672
     username: guest
     password: guest
+  consul:
+    host: localhost
+    port: 8500
+    discovery:
+      register: true
+  profiles:
+    active: native
+
+server:
+  port: 8888
 
 management:
   tracing:
     sampling:
       probability: 1.0
-
   zipkin:
     tracing:
       endpoint: http://localhost:9411/api/v2/spans
-
   endpoints:
     web:
       exposure:
-        include: "health,info,busrefresh"
+        include: "health,info,refresh,busrefresh"

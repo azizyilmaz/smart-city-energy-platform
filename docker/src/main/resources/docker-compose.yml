@@ -1,0 +1,17 @@
+services:
+  consul:
+    image: hashicorp/consul:1.16
+    command: agent -dev -client=0.0.0.0
+    ports:
+      - "8500:8500"
+
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"

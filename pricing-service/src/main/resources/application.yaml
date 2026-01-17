@@ -23,6 +23,8 @@ spring:
             analytics-in-0:
               consumer:
                 auto-bind-dlq: true
+    bus:
+      enabled: true
 management:
   tracing:
     sampling:
